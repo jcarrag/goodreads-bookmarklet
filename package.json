@@ -1,0 +1,23 @@
+{
+  "name": "goodreads-bookmarklet",
+  "version": "1.0.0",
+  "main": "dist/bundle.js",
+  "license": "MIT",
+  "description": "A bookmarklet to push Goodreads to Kindle",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/jcarrag/goodreads-bookmarklet.git"
+  },
+  "scripts": {
+    "start": "rollup -c -m"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.1",
+    "@rollup/plugin-node-resolve": "^7.0.0",
+    "rollup": "^1.29.0",
+    "rollup-plugin-serve": "^1.0.1"
+  },
+  "dependencies": {
+    "libgen": "git+ssh://git@github.com/jcarrag/libgen.js.git"
+  }
+}
