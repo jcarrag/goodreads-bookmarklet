@@ -6,16 +6,16 @@ export default {
   input: 'src/index.js',
   output: {
     file: 'dist/bundle.js',
-    format: 'iife'
+    format: 'cjs'
   },
   plugins: [
     resolve(),
-    commonjs(),
-    serve({
-      contentBase: 'dist',
-      headers: {
-        'Access-Control-Allow-Origin': '*'
-      }
-    })
+    commonjs()//,
+    //serve({
+    //  contentBase: 'dist',
+    //  headers: {
+    //    'Access-Control-Allow-Origin': '*'
+    //  }
+    //})
   ]
 };

@@ -6,10 +6,10 @@
   "description": "A bookmarklet to push Goodreads to Kindle",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/jcarrag/goodreads-bookmarklet.git"
+    "url": "https://github.com/jcarrag/goodreads-bookmarklet.git"
   },
   "scripts": {
-    "start": "rollup -c -m"
+    "start": "rollup -c -m && node dist/bundle.js"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.1",
@@ -18,6 +18,8 @@
     "rollup-plugin-serve": "^1.0.1"
   },
   "dependencies": {
-    "libgen": "git+ssh://git@github.com/jcarrag/libgen.js.git"
+    "got": "^10.2.2",
+    "libgen": "^2.0.0",
+    "xmldom": "^0.2.1"
   }
 }
