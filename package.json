@@ -15,14 +15,23 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.1",
     "@rollup/plugin-node-resolve": "^7.0.0",
+    "husky": "^4.2.0",
     "patch-package": "^6.2.0",
+    "prettier": "^1.19.1",
+    "pretty-quick": "^2.0.1",
     "rollup": "^1.29.0",
-    "rollup-plugin-serve": "^1.0.1"
+    "rollup-plugin-serve": "^1.0.1",
+    "save": "^2.4.0"
   },
   "dependencies": {
     "dotenv": "^8.2.0",
     "got": "^10.2.2",
     "libgen": "^2.0.0",
     "xmldom": "^0.2.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
   }
 }
