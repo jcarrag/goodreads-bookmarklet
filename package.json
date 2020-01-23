@@ -10,7 +10,8 @@
   },
   "scripts": {
     "postinstall": "patch-package",
-    "start": "rollup -c -m && node dist/server.js"
+    "start": "rollup -c -m && node dist/server.js",
+    "startPurs": "spago bundle-app --main Main --to dist/server-purs.js && node dist/server-purs.js"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.1",
@@ -21,12 +22,15 @@
     "pretty-quick": "^2.0.1",
     "rollup": "^1.29.0",
     "rollup-plugin-serve": "^1.0.1",
-    "save": "^2.4.0"
+    "save": "^2.4.0",
+    "spago": "^0.13.1"
   },
   "dependencies": {
     "dotenv": "^8.2.0",
     "got": "^10.2.2",
     "libgen": "^2.0.0",
+    "node-fetch": "^2.6.0",
+    "xhr2": "^0.2.0",
     "xmldom": "^0.2.1"
   },
   "husky": {

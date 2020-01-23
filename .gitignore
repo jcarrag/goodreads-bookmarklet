@@ -1,1 +1,4 @@
 .env
+.spago
+output/
+.psc-ide-port
