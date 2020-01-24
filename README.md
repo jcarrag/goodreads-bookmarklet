@@ -11,6 +11,7 @@
 
 - Automate upload to AWS lambda
 
+  - Serverless
   - Github actions?
 
 - Landing page to install bookmarklet
@@ -27,3 +28,5 @@
 - Test on multiple devices
 
 - Metrics?
+
+- Add nix-shell file?

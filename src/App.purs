@@ -1,7 +1,8 @@
-module App where
+module App (handleEvent) where
 
 import Prelude
 
+import AwsEvent (AwsEvent(..))
 import Data.Array.Partial (head)
 import Data.ArrayBuffer.Types (ArrayBuffer)
 import Data.Either (fromRight)
@@ -27,24 +28,22 @@ import Web.DOM.Document (Document, toNode)
 import Web.DOM.Element (fromNode, getAttribute)
 import Web.DOM.Node (firstChild, nextSibling, textContent)
 
-
-handleEvent :: Effect Unit
-handleEvent =
+handleEvent :: AwsEvent -> Effect Unit
+handleEvent (AwsEvent { queryStringParameters: { query, from, to }}) =
   launchAff_ do
-   mailjetUser <- getMailjetUser
-   mirror <- L.getMirror
-   liftEffect $ log $ "mirror: " <> mirror
-   let query = "grapes of wrath"
-   books <- L.search mirror query
-   liftEffect $ log $ "books: " <> show books
-   preDownloadUrl <- L.getPreDownloadUrl $ unsafePartial $ head books
-   liftEffect $ log $ "pre-download url: " <> preDownloadUrl
-   downloadFileUrl <- getDownloadFileUrl preDownloadUrl
-   liftEffect $ log $ "download file url: " <> downloadFileUrl
-   file <- downloadFile downloadFileUrl
-   liftEffect $ log "file downloaded"
-   emailStatusCode <- sendEmail mailjetUser query file
-   liftEffect $ log $ "email status code: " <> emailStatusCode
+    mailjetUser <- getMailjetUser
+    mirror <- L.getMirror
+    liftEffect $ log $ "mirror: " <> mirror
+    books <- L.search mirror query
+    liftEffect $ log $ "books: " <> show books
+    preDownloadUrl <- L.getPreDownloadUrl $ unsafePartial $ head books
+    liftEffect $ log $ "pre-download url: " <> preDownloadUrl
+    downloadFileUrl <- getDownloadFileUrl preDownloadUrl
+    liftEffect $ log $ "download file url: " <> downloadFileUrl
+    file <- downloadFile downloadFileUrl
+    liftEffect $ log "file downloaded"
+    emailStatusCode <- sendEmail mailjetUser query file
+    liftEffect $ log $ "email status code: " <> emailStatusCode
 
 getMailjetUser :: Aff String
 getMailjetUser =
@@ -90,8 +89,8 @@ sendEmail mailjetUser fileName file =
 getDownloadFileUrl :: String -> Aff String
 getDownloadFileUrl preDownloadUrl = unsafePartial $
   do
-    preDownloadPageResponse <- attempt $ fetch (M.URL preDownloadUrl) M.defaultFetchOptions
-    preDownloadPageXml <- M.text $ fromRight preDownloadPageResponse
+    preDownloadPageResponse <- fetch (M.URL preDownloadUrl) M.defaultFetchOptions
+    preDownloadPageXml <- M.text preDownloadPageResponse
     let preDownloadPageXml' = replace (unsafeRegex "\t|\r|\n" global) "" preDownloadPageXml
     domParser <- liftEffect makeDOMParser
     document <- liftEffect $ fromRight <$> parseHTMLFromString preDownloadPageXml' domParser
@@ -102,8 +101,8 @@ getDownloadFileUrl preDownloadUrl = unsafePartial $
 downloadFile :: String -> Aff ArrayBuffer
 downloadFile downloadFileUrl =
   do
-    fileResponse <- attempt $ fetch (M.URL downloadFileUrl) M.defaultFetchOptions
-    M.arrayBuffer $ unsafePartial $ fromRight fileResponse
+    fileResponse <- fetch (M.URL downloadFileUrl) M.defaultFetchOptions
+    M.arrayBuffer fileResponse
   where
     fetch = M.fetch nodeFetch
 
