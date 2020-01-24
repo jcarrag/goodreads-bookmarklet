@@ -10,7 +10,9 @@
   },
   "scripts": {
     "postinstall": "patch-package",
-    "start": "/run/current-system/sw/bin/spago bundle-module --main Export --to index.js && rollup -c -m"
+    "pursBuild": "/run/current-system/sw/bin/spago bundle-module --main Export --to dist/server.js",
+    "jsBuild": "rollup -c -m -w",
+    "start": "npm run pursBuild && npm run jsBuild"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.1",
@@ -21,6 +23,7 @@
     "pretty-quick": "^2.0.1",
     "rollup": "^1.29.0",
     "rollup-plugin-serve": "^1.0.1",
+    "serverless": "^1.61.3",
     "spago": "^0.13.1"
   },
   "dependencies": {

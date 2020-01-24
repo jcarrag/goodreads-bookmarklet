@@ -4,8 +4,22 @@ import Prelude
 
 import App as A
 import AwsEvent (AwsEvent)
-import Effect.Aff.Compat (mkEffectFn1)
-import Effect.Uncurried (EffectFn1)
+import Data.Nullable (Nullable, null)
+import Effect (Effect)
+import Effect.Aff.Compat (mkEffectFn3, runEffectFn2)
+import Effect.Uncurried (EffectFn2, EffectFn3)
+import Foreign (Foreign, unsafeFromForeign)
 
-handler :: EffectFn1 AwsEvent Unit
-handler = mkEffectFn1 A.handleEvent
+handler :: EffectFn3 AwsEvent Foreign Foreign Unit
+handler = mkEffectFn3 handleEvent
+
+handleEvent :: AwsEvent -> Foreign -> Foreign -> Effect Unit
+handleEvent event _ cbF = A.handleEvent event >>= \_ -> runEffectFn2 (toCallback cbF) null response
+  where
+    toCallback :: forall r. Foreign -> EffectFn2 (Nullable Unit) { | r } Unit
+    toCallback = unsafeFromForeign
+    response = { statusCode: 200
+               , headers: { "Access-Control-Allow-Origin": "*"
+                          , "Access-Control-Allow-Credentials": true
+                          }
+               }

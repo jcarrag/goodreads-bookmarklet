@@ -1,4 +1,10 @@
+# package directories
+node_modules
+jspm_packages
+.spago/
+output
 .env
-.spago
-output/
 .psc-ide-port
+
+# Serverless directories
+.serverless

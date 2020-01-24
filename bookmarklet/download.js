@@ -15,8 +15,9 @@ var query = title + " " + author;
 var result = (async () => {
   console.log("sending request");
 
+  //manual lambda: "https://gi40wm34t1.execute-api.ap-northeast-1.amazonaws.com/default/goodreads-bookmarklet?query=" +
   const response = await fetch(
-    "https://gi40wm34t1.execute-api.ap-northeast-1.amazonaws.com/default/goodreads-bookmarklet?query=" +
+    "https://6wm2fn9871.execute-api.ap-northeast-1.amazonaws.com/production?query=" +
       query +
       "&from=test@email.com&to=test@kindle.com",
     { method: "GET" }

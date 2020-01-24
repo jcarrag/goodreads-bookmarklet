@@ -14,6 +14,7 @@ You can edit this file as you like.
     , "milkis"
     , "newtype"
     , "node-buffer"
+    , "nullable"
     , "partial"
     , "psci-support"
     , "web-dom-parser"
