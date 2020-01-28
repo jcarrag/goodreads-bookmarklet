@@ -5,6 +5,7 @@ jspm_packages
 output
 .env
 .psc-ide-port
+.psci_modules/
 
 # Serverless directories
 .serverless

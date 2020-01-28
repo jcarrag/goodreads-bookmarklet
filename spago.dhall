@@ -14,6 +14,8 @@ You can edit this file as you like.
     , "milkis"
     , "newtype"
     , "node-buffer"
+    , "node-child-process"
+    , "node-fs-aff"
     , "nullable"
     , "partial"
     , "psci-support"

@@ -4,18 +4,7 @@ import Prelude
 
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Newtype (class Newtype, unwrap)
-import Effect (Effect)
-import Effect.Aff (Aff)
-
---newtype Query = Query { query :: String
---                      , from :: String
---                      , to :: String
---                      }
---
---derive instance genericQuery :: Generic Query _
---instance showQuery :: Show Query where show = genericShow
---derive instance newtypeQuery :: Newtype Query _
+import Data.Newtype (class Newtype)
 
 
 newtype AwsEvent = AwsEvent { queryStringParameters :: { query :: String
