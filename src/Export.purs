@@ -1,7 +1,6 @@
 module Export (handler) where
 
 import Prelude
-
 import App as A
 import AwsEvent (AwsEvent)
 import Data.Nullable (Nullable, null)
@@ -16,10 +15,13 @@ handler = mkEffectFn3 handleEvent
 handleEvent :: AwsEvent -> Foreign -> Foreign -> Effect Unit
 handleEvent event _ cbF = A.handleEvent event >>= \_ -> runEffectFn2 (toCallback cbF) null response
   where
-    toCallback :: forall r. Foreign -> EffectFn2 (Nullable Unit) { | r } Unit
-    toCallback = unsafeFromForeign
-    response = { statusCode: 200
-               , headers: { "Access-Control-Allow-Origin": "*"
-                          , "Access-Control-Allow-Credentials": true
-                          }
-               }
+  toCallback :: forall r. Foreign -> EffectFn2 (Nullable Unit) { | r } Unit
+  toCallback = unsafeFromForeign
+
+  response =
+    { statusCode: 200
+    , headers:
+      { "Access-Control-Allow-Origin": "*"
+      , "Access-Control-Allow-Credentials": true
+      }
+    }

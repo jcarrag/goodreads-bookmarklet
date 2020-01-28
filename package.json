@@ -33,7 +33,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged"
+      "pre-commit": "pretty-quick --staged && find src/ lib/ -name '*.purs' -exec purty --write {} \\;"
     }
   }
 }
