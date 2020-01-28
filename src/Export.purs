@@ -2,7 +2,7 @@ module Export (handler) where
 
 import Prelude
 import App as A
-import AwsEvent (AwsEvent)
+import Data.AwsEvent (AwsEvent)
 import Data.Nullable (Nullable, null)
 import Effect (Effect)
 import Effect.Aff.Compat (mkEffectFn3, runEffectFn2)

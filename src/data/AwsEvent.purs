@@ -1,4 +1,4 @@
-module AwsEvent where
+module Data.AwsEvent where
 
 import Prelude
 import Data.Generic.Rep (class Generic)

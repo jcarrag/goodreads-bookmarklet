@@ -2,7 +2,7 @@ module Main where
 
 import Prelude
 import App as A
-import AwsEvent (AwsEvent(..))
+import Data.AwsEvent (AwsEvent(..))
 import Effect (Effect)
 
 main :: Effect Unit
