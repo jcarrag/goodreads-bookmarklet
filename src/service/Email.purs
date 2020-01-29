@@ -1,11 +1,12 @@
 module Service.Email (sendEmail) where
 
-import Prelude (Unit, bind, pure, void, ($), (<>))
+import Prelude (Unit, bind, discard, pure, void, ($), (<>))
 import Data.Book (Book(..))
 import Data.Maybe (Maybe, fromJust, fromMaybe)
 import Dotenv (loadFile)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Effect.Class.Console (log)
 import Milkis as M
 import Milkis.Impl.Node (nodeFetch)
 import Node.Buffer as B
@@ -16,7 +17,9 @@ import Partial.Unsafe (unsafePartial)
 sendEmail :: Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> Aff Unit
 sendEmail (Book { downloaded, converted, title }) from to = do
   mailjetUser <- getMailjetUser
+  log "got MAILJET_USER"
   sendEmail' from to mailjetUser title $ fromMaybe downloaded converted
+  log $ "sent email from: " <> from <> ", to: " <> to
 
 getMailjetUser :: Aff String
 getMailjetUser = do

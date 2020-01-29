@@ -17,7 +17,7 @@ import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff, error)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
+import Effect.Class.Console (log)
 import Effect.Exception (catchException)
 import Libgen as L
 import Milkis as M
@@ -37,18 +37,18 @@ import Web.DOM.Node (firstChild, nextSibling, textContent)
 downloadBook :: String -> Aff (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
 downloadBook query = do
   mirror <- L.getMirror
-  liftEffect $ log $ "mirror: " <> mirror
+  log $ "mirror: " <> mirror
   books <- L.search mirror query
-  liftEffect $ log $ "books: " <> show books
+  log $ "books: " <> show books
   let
     downloadableBooks = A.sortWith (\(Book b) -> Tuple b.extension $ negate b.filesize) $ A.filter (\(Book b) -> A.elem b.extension [ "mobi", "epub" ]) books
 
     downloadableBooksE = handleEpubMobi <$> downloadableBooks
-  liftEffect $ log $ "sorted books: " <> show downloadableBooks
+  log $ "sorted books: " <> show downloadableBooks
   A.foldr (<|>) (unsafePartial $ head downloadableBooksE) (unsafePartial $ tail downloadableBooksE)
   where
   handleEpubMobi book@(Book { extension }) = do
-    liftEffect $ log $ "downloading book: " <> show book
+    log $ "downloading book: " <> show book
     case extension of
       "epub" -> downloadBinary book >>= convertBinary
       "mobi" -> (over Book (R.merge { converted: Nothing })) <$> downloadBinary book
@@ -56,15 +56,15 @@ downloadBook query = do
 
 convertBinary :: Book ( downloaded :: B.Buffer ) -> Aff (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
 convertBinary (Book book@{ downloaded, extension, title }) = do
-  liftEffect $ log "writing downloaded file"
+  log "writing downloaded file"
   FS.writeFile fileName downloaded
-  liftEffect $ log $ "converting downloaded file: " <> fileName
+  log $ "converting downloaded file: " <> fileName
   _ <- catchKindlegen $ C.execSync ("./bin/kindlegen \"" <> fileName <> "\"") C.defaultExecSyncOptions
-  liftEffect $ log $ "reading converted file: " <> mobiFileName
+  log $ "reading converted file: " <> mobiFileName
   converted <- FS.readFile mobiFileName
-  liftEffect $ log $ "deleting downloaded file" <> fileName
+  log $ "deleting downloaded file" <> fileName
   FS.unlink fileName
-  liftEffect $ log $ "deleting converted file: " <> mobiFileName
+  log $ "deleting converted file: " <> mobiFileName
   FS.unlink mobiFileName
   pure $ Book $ R.merge book { converted: Just converted }
   where
@@ -79,11 +79,11 @@ convertBinary (Book book@{ downloaded, extension, title }) = do
 downloadBinary :: Book () -> Aff (Book ( downloaded :: B.Buffer ))
 downloadBinary book@(Book b) = do
   preDownloadUrl <- L.getPreDownloadUrl book
-  liftEffect $ log $ "pre-download url: " <> preDownloadUrl
+  log $ "pre-download url: " <> preDownloadUrl
   downloadFileUrl <- getDownloadUrl preDownloadUrl
-  liftEffect $ log $ "download file url: " <> downloadFileUrl
+  log $ "download file url: " <> downloadFileUrl
   downloaded <- downloadFile downloadFileUrl
-  liftEffect $ log "file downloaded"
+  log "file downloaded"
   pure $ Book $ R.merge b { downloaded }
 
 downloadFile :: String -> Aff B.Buffer
