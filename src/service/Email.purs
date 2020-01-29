@@ -1,6 +1,6 @@
 module Service.Email (sendEmail) where
 
-import Prelude (Unit, bind, discard, pure, void, ($), (<>))
+import Prelude (Unit, bind, pure, show, ($), (<>))
 import Data.Book (Book(..))
 import Data.Maybe (Maybe, fromJust, fromMaybe)
 import Dotenv (loadFile)
@@ -17,9 +17,8 @@ import Partial.Unsafe (unsafePartial)
 sendEmail :: Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> Aff Unit
 sendEmail (Book { downloaded, converted, title }) from to = do
   mailjetUser <- getMailjetUser
-  log "got MAILJET_USER"
-  sendEmail' from to mailjetUser title $ fromMaybe downloaded converted
-  log $ "sent email from: " <> from <> ", to: " <> to
+  responseCode <- sendEmail' from to mailjetUser title $ fromMaybe downloaded converted
+  log $ "sent email (" <> show responseCode <> ") from: " <> from <> ", to: " <> to
 
 getMailjetUser :: Aff String
 getMailjetUser = do
@@ -27,10 +26,11 @@ getMailjetUser = do
   userM <- liftEffect $ lookupEnv "MAILJET_USER"
   pure $ unsafePartial $ fromJust userM
 
-sendEmail' :: String -> String -> String -> String -> B.Buffer -> Aff Unit
+sendEmail' :: String -> String -> String -> String -> B.Buffer -> Aff Int
 sendEmail' from to mailjetUser fileName attachment = do
   attachmentB64 <- liftEffect $ B.toString E.Base64 attachment
-  void $ fetch url $ opts attachmentB64
+  response <- fetch url $ opts attachmentB64
+  pure $ M.statusCode $ response
   where
   fileName' = fileName <> ".mobi"
 
@@ -47,10 +47,14 @@ sendEmail' from to mailjetUser fileName attachment = do
           "Messages": [
             {
               "From": { "Email": """
+        <> "\""
         <> from
+        <> "\""
         <> """ },
               "To": [{ "Email": """
+        <> "\""
         <> to
+        <> "\""
         <> """ }],
               "TextPart": "Greetings from Mailjet.",
               "Attachments": [
