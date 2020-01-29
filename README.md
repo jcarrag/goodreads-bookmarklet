@@ -1,13 +1,12 @@
 ## Roadmap
 
-- Use kindlegen to convert epub to mobi
+- If converting fails, try to send a pdf
 
-  - https://aws.amazon.com/blogs/compute/running-executables-in-aws-lambda/
-  - Download binary, commit to source
-  - In JS, download from github, save to file, spawn execute
-  - Convert file, send in email, delete file
+- Use thi API: https://libgen.me
 
-- If the above fails, try to send a pdf
+  1. https://books.libgen.me/search?search=the+swerve+how+the+world+became+modern&page=1&sort=0&perPage=0&year[]=0&collection=all
+  2. https://books.libgen.me/book/get/775286
+  3. https://books.libgen.me/links/775286
 
 - Automate upload to AWS lambda
 
