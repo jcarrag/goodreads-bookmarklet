@@ -39,19 +39,59 @@ var myModalHtml = `
 </div>
 `;
 
-var TITLE_XPATH = '//*[@id="bookTitle"]';
-var AUTHOR_XPATH = '//*[@id="bookAuthors"]/span[2]/div/a/span';
+var DESKTOP_TITLE_XPATH = '//*[@id="bookTitle"]';
+var DESKTOP_AUTHOR_XPATH = '//*[@id="bookAuthors"]/span[2]/div/a/span';
+var MOBILE_TITLE_XPATH = '//div[@class="bookInfoGroup"]/h1/span';
+var MOBILE_AUTHOR_XPATH = '//a[@class="authorName"]/span';
 
 var getBookTitle = function() {
-  return document
-    .evaluate(TITLE_XPATH, document, null, XPathResult.STRING_TYPE, null)
+  var desktopTitle = document
+    .evaluate(
+      DESKTOP_TITLE_XPATH,
+      document,
+      null,
+      XPathResult.STRING_TYPE,
+      null
+    )
     .stringValue.trim();
+
+  var mobileTitle = document
+    .evaluate(MOBILE_TITLE_XPATH, document, null, XPathResult.STRING_TYPE, null)
+    .stringValue.trim();
+
+  if (desktopTitle == "") {
+    return mobileTitle;
+  } else {
+    return desktopTitle;
+  }
 };
 
 var getBookAuthor = function() {
-  return document
-    .evaluate(AUTHOR_XPATH, document, null, XPathResult.STRING_TYPE, null)
+  var desktopAuthor = document
+    .evaluate(
+      DESKTOP_AUTHOR_XPATH,
+      document,
+      null,
+      XPathResult.STRING_TYPE,
+      null
+    )
     .stringValue.trim();
+
+  var mobileAuthor = document
+    .evaluate(
+      MOBILE_AUTHOR_XPATH,
+      document,
+      null,
+      XPathResult.STRING_TYPE,
+      null
+    )
+    .stringValue.trim();
+
+  if (desktopAuthor == "") {
+    return mobileAuthor;
+  } else {
+    return desktopAuthor;
+  }
 };
 
 var sendBook = async function(fromEmail, toEmail) {
