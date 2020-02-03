@@ -99,7 +99,7 @@ var sendBook = async function(fromEmail, toEmail) {
 
   const response = await fetch(
     "https://6wm2fn9871.execute-api.ap-northeast-1.amazonaws.com/production?query=" +
-      query +
+      encodeURIComponent(query) +
       "&from=" +
       fromEmail +
       "&to=" +
