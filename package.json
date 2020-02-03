@@ -11,6 +11,7 @@
   "scripts": {
     "postinstall": "patch-package",
     "pursBuild": "/run/current-system/sw/bin/spago bundle-module --main Export --to dist/server.js",
+    "pursDeploy": "npx serverless deploy function --function server",
     "jsBuild": "rollup -c -m -w",
     "start": "npm run pursBuild && npm run jsBuild"
   },
