@@ -1,9 +1,11 @@
-module Service.Email (sendEmail) where
+module Service.Email
+  ( sendBookEmail
+  , sendErrorEmail
+  ) where
 
 import Prelude (Unit, bind, pure, show, ($), (<>))
 import Data.Book (Book(..))
-import Data.Maybe (Maybe, fromJust, fromMaybe)
-import Dotenv (loadFile)
+import Data.Maybe (Maybe, fromMaybe)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
@@ -11,69 +13,86 @@ import Milkis as M
 import Milkis.Impl.Node (nodeFetch)
 import Node.Buffer as B
 import Node.Encoding as E
-import Node.Process (lookupEnv)
-import Partial.Unsafe (unsafePartial)
 
-sendEmail :: Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> Aff Unit
-sendEmail (Book { downloaded, converted, title }) from to = do
-  mailjetUser <- getMailjetUser
-  responseCode <- sendEmail' from to mailjetUser title $ fromMaybe downloaded converted
-  log $ "sent email (" <> show responseCode <> ") from: " <> from <> ", to: " <> to
+sendErrorEmail :: String -> String -> String -> Aff Unit
+sendErrorEmail mailjetUser query to = do
+  responseCode <- sendEmail' mailjetUser body
+  log $ "sent error email (" <> show responseCode <> ") from: " <> from <> ", to: " <> to
+  where
+  from = "test@email.com"
 
-getMailjetUser :: Aff String
-getMailjetUser = do
-  _ <- loadFile
-  userM <- liftEffect $ lookupEnv "MAILJET_USER"
-  pure $ unsafePartial $ fromJust userM
+  textPart = "Sorry, unable to send '" <> query <> "' to '" <> to <> "'"
 
-sendEmail' :: String -> String -> String -> String -> B.Buffer -> Aff Int
-sendEmail' from to mailjetUser fileName attachment = do
-  attachmentB64 <- liftEffect $ B.toString E.Base64 attachment
-  response <- fetch url $ opts attachmentB64
+  body =
+    """
+    {
+      "Messages": [
+        {
+          "From": { "Email": """
+      <> quote from
+      <> """ },
+          "To": [{ "Email": """
+      <> quote to
+      <> """ }],
+          "TextPart": """
+      <> quote ("Sorry, unable to send '" <> query <> "' to '" <> to <> "'")
+      <> """,
+          "Attachments": []
+        }
+      ]
+    }
+    """
+
+sendBookEmail :: String -> Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> Aff Unit
+sendBookEmail mailjetUser (Book { downloaded, converted, title }) from to = do
+  attachment <- liftEffect $ B.toString E.Base64 $ fromMaybe downloaded converted
+  responseCode <- sendEmail' mailjetUser $ body attachment
+  log $ "sent book email (" <> show responseCode <> ") from: " <> from <> ", to: " <> to
+  where
+  fileName' = title <> ".mobi"
+
+  body attachment =
+    """
+    {
+      "Messages": [
+        {
+          "From": { "Email": """
+      <> quote from
+      <> """ },
+          "To": [{ "Email": """
+      <> quote to
+      <> """ }],
+          "TextPart": "Goodreads-bookmarklet error.",
+          "Attachments": [
+            {
+              "Filename": """
+      <> quote fileName'
+      <> """,
+              "ContentType": "text/plain",
+              "Base64Content": """
+      <> quote attachment
+      <> """
+            }
+          ]
+        }
+      ]
+    }
+    """
+
+sendEmail' :: String -> String -> Aff Int
+sendEmail' mailjetUser body = do
+  response <- fetch url $ opts
   pure $ M.statusCode $ response
   where
-  fileName' = fileName <> ".mobi"
-
   fetch = M.fetch nodeFetch
 
   url = M.URL $ "https://" <> mailjetUser <> "@api.mailjet.com/v3.1/send"
 
-  opts attachmentB64 =
+  opts =
     { method: M.postMethod
     , headers: M.makeHeaders { "Content-Type": "application/json" }
-    , body:
-      """
-        {
-          "Messages": [
-            {
-              "From": { "Email": """
-        <> "\""
-        <> from
-        <> "\""
-        <> """ },
-              "To": [{ "Email": """
-        <> "\""
-        <> to
-        <> "\""
-        <> """ }],
-              "TextPart": "Greetings from Mailjet.",
-              "Attachments": [
-                {
-                  "Filename": """
-        <> "\""
-        <> fileName'
-        <> "\""
-        <> """,
-                  "ContentType": "text/plain",
-                  "Base64Content": """
-        <> "\""
-        <> attachmentB64
-        <> "\""
-        <> """
-                }
-              ]
-            }
-          ]
-        }
-        """
+    , body: body
     }
+
+quote :: String -> String
+quote s = "\"" <> s <> "\""

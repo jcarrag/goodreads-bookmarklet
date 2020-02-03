@@ -56,15 +56,10 @@ downloadBook query = do
 
 convertBinary :: Book ( downloaded :: B.Buffer ) -> Aff (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
 convertBinary (Book book@{ downloaded, extension, title }) = do
-  log "writing downloaded file"
   FS.writeFile fileName downloaded
-  log $ "converting downloaded file: " <> fileName
   _ <- catchKindlegen $ C.execSync ("./bin/kindlegen \"" <> fileName <> "\"") C.defaultExecSyncOptions
-  log $ "reading converted file: " <> mobiFileName
   converted <- FS.readFile mobiFileName
-  log $ "deleting downloaded file" <> fileName
   FS.unlink fileName
-  log $ "deleting converted file: " <> mobiFileName
   FS.unlink mobiFileName
   pure $ Book $ R.merge book { converted: Just converted }
   where
