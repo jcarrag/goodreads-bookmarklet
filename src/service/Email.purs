@@ -33,7 +33,7 @@ sendErrorEmail mailjetUser query to = do
       <> quote to
       <> """ }],
           "TextPart": """
-      <> quote ("Sorry, unable to send '" <> query <> "'")
+      <> quote ("Unable to send '" <> query <> "' to your kindle")
       <> """,
           "Attachments": []
         }
