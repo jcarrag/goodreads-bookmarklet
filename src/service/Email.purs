@@ -21,8 +21,6 @@ sendErrorEmail mailjetUser query to = do
   where
   from = "test@email.com"
 
-  textPart = "Sorry, unable to send '" <> query <> "' to '" <> to <> "'"
-
   body =
     """
     {
@@ -35,7 +33,7 @@ sendErrorEmail mailjetUser query to = do
       <> quote to
       <> """ }],
           "TextPart": """
-      <> quote ("Sorry, unable to send '" <> query <> "' to '" <> to <> "'")
+      <> quote ("Sorry, unable to send '" <> query <> "'")
       <> """,
           "Attachments": []
         }
