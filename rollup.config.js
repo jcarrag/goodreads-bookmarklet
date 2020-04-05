@@ -7,7 +7,8 @@ export default [
     input: "bookmarklet/download.js",
     output: {
       file: "dist/download.js",
-      format: "es"
+      format: "es",
+      sourceMap: false
     },
     plugins: [resolve(), commonjs(), serve("dist")]
   }
