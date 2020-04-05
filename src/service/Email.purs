@@ -1,6 +1,6 @@
 module Service.Email
-  ( sendBookEmail
-  , sendErrorEmail
+  ( Email(..)
+  , emailInterpreter
   ) where
 
 import Prelude (Unit, bind, pure, show, ($), (<>))
@@ -13,6 +13,22 @@ import Milkis as M
 import Milkis.Impl.Node (nodeFetch)
 import Node.Buffer as B
 import Node.Encoding as E
+
+type Name
+  = String
+
+newtype Email f
+  = Email
+  { send :: String -> Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> f Unit
+  , sendError :: String -> String -> String -> f Unit
+  }
+
+emailInterpreter :: Email Aff
+emailInterpreter =
+  Email
+    { send: sendBookEmail
+    , sendError: sendErrorEmail
+    }
 
 sendErrorEmail :: String -> String -> String -> Aff Unit
 sendErrorEmail mailjetUser query to = do

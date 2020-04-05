@@ -1,4 +1,7 @@
-module Service.Download (downloadBook) where
+module Service.Download
+  ( Download(..)
+  , downloadInterpreter
+  ) where
 
 import Prelude (bind, discard, negate, pure, show, ($), (<$>), (<>), (>>=), (<<<))
 import Control.Alternative ((<|>))
@@ -33,6 +36,17 @@ import Web.DOM.DOMParser.Node (makeDOMParser)
 import Web.DOM.Document (Document, toNode)
 import Web.DOM.Element (fromNode, getAttribute)
 import Web.DOM.Node (firstChild, nextSibling, textContent)
+
+newtype Download f
+  = Download
+  { download :: String -> f (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
+  }
+
+downloadInterpreter :: Download Aff
+downloadInterpreter =
+  Download
+    { download: downloadBook
+    }
 
 downloadBook :: String -> Aff (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
 downloadBook query = do

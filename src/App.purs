@@ -1,30 +1,23 @@
 module App (handleEvent) where
 
+import Control.Monad.Error.Class (class MonadError, catchError)
 import Data.AwsEvent (AwsEvent(..))
-import Data.Maybe (fromJust)
-import Dotenv (loadFile)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
-import Effect.Class (liftEffect)
-import Control.Monad.Error.Class (catchError)
-import Node.Process (lookupEnv)
-import Partial.Unsafe (unsafePartial)
-import Prelude (Unit, bind, pure, ($))
-import Service.Download (downloadBook)
-import Service.Email (sendBookEmail, sendErrorEmail)
+import Effect.Aff (launchAff_)
+import Effect.Exception (Error)
+import Prelude (Unit, bind, ($))
+import Service.Config (Config(..), configInterpreter)
+import Service.Download (Download(..), downloadInterpreter)
+import Service.Email (Email(..), emailInterpreter)
 
 handleEvent :: AwsEvent -> Effect Unit
-handleEvent (AwsEvent { queryStringParameters: { query, from, to } }) =
-  launchAff_ do
-    mailjetUser <- getMailjetUser
-    downloadAndSendBook mailjetUser `catchError` (\_ -> sendErrorEmail mailjetUser query from)
+handleEvent e = launchAff_ $ toHandleEvent configInterpreter downloadInterpreter emailInterpreter e
+
+toHandleEvent :: forall f. MonadError Error f => Config f -> Download f -> Email f -> AwsEvent -> f Unit
+toHandleEvent (Config c) (Download d) (Email e) (AwsEvent { queryStringParameters: { query, from, to } }) = do
+  mailjetUser <- c.mailjetUser
+  downloadAndSendBook mailjetUser `catchError` (\_ -> e.sendError mailjetUser query from)
   where
   downloadAndSendBook mailjetUser = do
-    book <- downloadBook query
-    sendBookEmail mailjetUser book from to
-
-getMailjetUser :: Aff String
-getMailjetUser = do
-  _ <- loadFile
-  userM <- liftEffect $ lookupEnv "MAILJET_USER"
-  pure $ unsafePartial $ fromJust userM
+    book <- d.download query
+    e.send mailjetUser book from to
