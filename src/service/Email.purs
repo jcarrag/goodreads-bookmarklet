@@ -3,16 +3,19 @@ module Service.Email
   , emailInterpreter
   ) where
 
-import Prelude (Unit, bind, pure, show, ($), (<>))
+import Control.Apply ((*>))
+import Control.Monad.Error.Class (class MonadError, catchError, throwError)
 import Data.Book (Book(..))
 import Data.Maybe (Maybe, fromMaybe)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
+import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
+import Effect.Exception (Error)
 import Milkis as M
 import Milkis.Impl.Node (nodeFetch)
 import Node.Buffer as B
 import Node.Encoding as E
+import Prelude (Unit, bind, discard, pure, show, ($), (<>))
 
 type Name
   = String
@@ -29,6 +32,26 @@ emailInterpreter =
     { send: sendBookEmail
     , sendError: sendErrorEmail
     }
+
+loggingInterpreter :: forall f. MonadError Error f => MonadEffect f => Email f -> Email f
+loggingInterpreter (Email underlying) =
+  Email
+    underlying
+      { send =
+        \mailjetUser book from to -> do
+          log "Sending email"
+          result <- underlying.send mailjetUser book from to `logError` "Failed to send email"
+          log "Sent email"
+          pure result
+      , sendError =
+        \mailjetUser query to -> do
+          log "Sending error email"
+          result <- underlying.sendError mailjetUser query to `logError` "Failed to send error email"
+          log "Sent error email"
+          pure result
+      }
+  where
+  logError fa msg = fa `catchError` (\e -> (log $ msg <> ": " <> show e) *> throwError e)
 
 sendErrorEmail :: String -> String -> String -> Aff Unit
 sendErrorEmail mailjetUser query to = do
