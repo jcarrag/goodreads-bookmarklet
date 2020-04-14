@@ -5,6 +5,7 @@ import App as A
 import Data.AwsEvent (AwsEvent)
 import Data.Nullable (Nullable, null)
 import Effect (Effect)
+import Effect.Aff (launchAff_)
 import Effect.Aff.Compat (mkEffectFn3, runEffectFn2)
 import Effect.Uncurried (EffectFn2, EffectFn3)
 import Foreign (Foreign, unsafeFromForeign)
@@ -13,7 +14,7 @@ handler :: EffectFn3 AwsEvent Foreign Foreign Unit
 handler = mkEffectFn3 handleEvent
 
 handleEvent :: AwsEvent -> Foreign -> Foreign -> Effect Unit
-handleEvent event _ cbF = A.handleEvent event >>= \_ -> runEffectFn2 (toCallback cbF) null response
+handleEvent event _ cbF = (launchAff_ $ A.awsHandleEvent event) >>= \_ -> runEffectFn2 (toCallback cbF) null response
   where
   toCallback :: forall r. Foreign -> EffectFn2 (Nullable Unit) { | r } Unit
   toCallback = unsafeFromForeign

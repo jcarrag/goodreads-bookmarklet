@@ -1,6 +1,6 @@
 module Service.Email
   ( Email(..)
-  , emailInterpreter
+  , toEmailInterpreter
   , loggingInterpreter
   ) where
 
@@ -18,20 +18,17 @@ import Node.Buffer as B
 import Node.Encoding as E
 import Prelude (Unit, bind, discard, pure, show, ($), (<>))
 
-type Name
-  = String
-
 newtype Email f
   = Email
-  { send :: String -> Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> f Unit
-  , sendError :: String -> String -> String -> f Unit
+  { send :: Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> f Unit
+  , sendError :: String -> String -> f Unit
   }
 
-emailInterpreter :: Email Aff
-emailInterpreter =
+toEmailInterpreter :: String -> Email Aff
+toEmailInterpreter mailjetUser =
   Email
-    { send: sendBookEmail
-    , sendError: sendErrorEmail
+    { send: sendBookEmail mailjetUser
+    , sendError: sendErrorEmail mailjetUser
     }
 
 loggingInterpreter :: forall f. MonadError Error f => MonadEffect f => Email f -> Email f
@@ -39,15 +36,15 @@ loggingInterpreter (Email underlying) =
   Email
     underlying
       { send =
-        \mailjetUser book from to -> do
+        \book from to -> do
           log "Sending email"
-          result <- underlying.send mailjetUser book from to `logError` "Failed to send email"
+          result <- underlying.send book from to `logError` "Failed to send email"
           log "Sent email"
           pure result
       , sendError =
-        \mailjetUser query to -> do
+        \query to -> do
           log "Sending error email"
-          result <- underlying.sendError mailjetUser query to `logError` "Failed to send error email"
+          result <- underlying.sendError query to `logError` "Failed to send error email"
           log "Sent error email"
           pure result
       }

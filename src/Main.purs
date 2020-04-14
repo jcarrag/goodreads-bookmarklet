@@ -4,16 +4,27 @@ import Prelude
 import App as A
 import Data.AwsEvent (AwsEvent(..))
 import Effect (Effect)
+import Effect.Aff (launchAff_)
+import Service.Config (Config(..), configInterpreter)
+import Service.Download as D
+import Service.Email as E
 
 main :: Effect Unit
-main = A.handleEvent awsEvent
+main =
+  launchAff_ do
+    config@(Config { mailjetUser }) <- configInterpreter
+    let
+      download = D.downloadInterpreter
 
-awsEvent :: AwsEvent
-awsEvent =
+      email = E.toEmailInterpreter mailjetUser
+    A.toHandleEvent download email (awsEvent config)
+
+awsEvent :: Config -> AwsEvent
+awsEvent (Config c) =
   AwsEvent
     { queryStringParameters:
-      { query: "The Swerve: How the World Became Modern"
-      , from: "test@email.com"
-      , to: "test@email.com" --"test@kindle.com"
+      { query: c.query
+      , from: c.fromEmail
+      , to: c.toEmail
       }
     }

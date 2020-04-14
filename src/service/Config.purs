@@ -9,21 +9,31 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Node.Process (lookupEnv)
 import Partial.Unsafe (unsafePartial)
-import Prelude (bind, pure, ($))
+import Prelude (bind, pure, ($), (<$>))
 
-newtype Config f
+newtype Config
   = Config
-  { mailjetUser :: f String
+  { mailjetUser :: String
+  , query :: String
+  , toEmail :: String
+  , fromEmail :: String
   }
 
-configInterpreter :: Config Aff
+configInterpreter :: Aff Config
 configInterpreter =
-  Config
-    { mailjetUser: getMailjetUser
-    }
-
-getMailjetUser :: Aff String
-getMailjetUser = do
-  _ <- loadFile
-  userM <- liftEffect $ lookupEnv "MAILJET_USER"
-  pure $ unsafePartial $ fromJust userM
+  unsafePartial
+    $ do
+        _ <- loadFile
+        mailjetUser <- getValue "MAILJET_USER"
+        query <- getValue "QUERY"
+        toEmail <- getValue "TO_EMAIL"
+        fromEmail <- getValue "FROM_EMAIL"
+        pure $ Config
+          $ { mailjetUser
+            , query
+            , toEmail
+            , fromEmail
+            }
+  where
+  getValue :: String -> Aff String
+  getValue name = unsafePartial $ fromJust <$> (liftEffect $ lookupEnv name)
