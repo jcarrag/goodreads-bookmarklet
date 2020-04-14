@@ -1,6 +1,7 @@
 module Service.Email
   ( Email(..)
   , emailInterpreter
+  , loggingInterpreter
   ) where
 
 import Control.Apply ((*>))
