@@ -9,7 +9,6 @@ import Control.Apply ((*>))
 import Control.Monad (void)
 import Control.Monad.Error.Class (class MonadError, catchError, throwError)
 import Data.Book (Book(..))
-import Data.Maybe (Maybe, fromMaybe)
 import Effect.Aff (Aff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
@@ -22,7 +21,7 @@ import Prelude (Unit, bind, discard, pure, show, ($), (<>))
 
 newtype Email f
   = Email
-  { send :: Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> f Unit
+  { send :: Book ( downloaded :: B.Buffer ) -> String -> String -> f Unit
   , sendError :: String -> String -> f Unit
   }
 
@@ -36,7 +35,7 @@ toEmailInterpreter mailjetUser =
 testEmailInterpreter :: forall f. MonadEffect f => Email f
 testEmailInterpreter =
   Email
-    { send: \(Book { title }) from to -> log $ buildSendBookEmail "attachment" title from to
+    { send: \(Book { extension, title }) from to -> log $ buildSendBookEmail "attachment" (title <> "." <> extension) from to
     , sendError: \title to -> log $ buildSendErrorEmail title "test@email.com" to
     }
 
@@ -85,9 +84,9 @@ buildSendErrorEmail title from to =
     }
     """
 
-sendBookEmail :: String -> Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> Aff Unit
-sendBookEmail mailjetUser (Book { downloaded, converted, title }) from to = do
-  attachment <- liftEffect $ B.toString E.Base64 $ fromMaybe downloaded converted
+sendBookEmail :: String -> Book ( downloaded :: B.Buffer ) -> String -> String -> Aff Unit
+sendBookEmail mailjetUser (Book { downloaded, title }) from to = do
+  attachment <- liftEffect $ B.toString E.Base64 downloaded
   responseCode <- sendEmail' mailjetUser $ buildSendBookEmail attachment title from to
   log $ "sent book email (" <> show responseCode <> ") from: " <> from <> ", to: " <> to
   where

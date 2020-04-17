@@ -11,7 +11,7 @@ import Data.Array as A
 import Data.Array.Partial (head, tail)
 import Data.Book (Book(..))
 import Data.Either (fromRight)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (fromJust)
 import Data.Newtype (over)
 import Data.String (trim)
 import Data.String.Regex (replace)
@@ -41,7 +41,7 @@ import Web.DOM.Node (firstChild, nextSibling, textContent)
 
 newtype Download f
   = Download
-  { download :: String -> f (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
+  { download :: String -> f (Book ( downloaded :: B.Buffer ))
   }
 
 downloadInterpreter :: Download Aff
@@ -56,18 +56,16 @@ testDownloadInterpreter =
     { download: readBookFromFile
     }
   where
-  readBookFromFile :: String -> Aff (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
+  readBookFromFile :: String -> Aff (Book ( downloaded :: B.Buffer ))
   readBookFromFile filename = do
-    epubFile <- FS.readFile $ "bin/" <> filename <> ".epub"
-    mobiFile <- FS.readFile $ "bin/" <> filename <> ".mobi"
+    file <- FS.readFile $ "bin/" <> filename
     pure $ Book
       $ { author: "author"
-        , extension: "epub"
+        , extension: filename
         , md5: "md5"
         , filesize: 0.0
         , title: filename
-        , downloaded: epubFile
-        , converted: Just mobiFile
+        , downloaded: file
         }
 
 loggingInterpreter :: forall f. MonadError Error f => MonadEffect f => Download f -> Download f
@@ -84,7 +82,7 @@ loggingInterpreter (Download underlying) =
   where
   logError fa msg = fa `catchError` (\e -> (log $ msg <> ": " <> show e) *> throwError e)
 
-downloadBook :: String -> Aff (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
+downloadBook :: String -> Aff (Book ( downloaded :: B.Buffer ))
 downloadBook query = do
   mirror <- L.getMirror
   log $ "mirror: " <> mirror
@@ -97,29 +95,27 @@ downloadBook query = do
   log $ "sorted books: " <> show downloadableBooks
   A.foldr (<|>) (unsafePartial $ head downloadableBooksE) (unsafePartial $ tail downloadableBooksE)
   where
-  handleEpubMobi book@(Book { extension }) = do
-    log $ "downloading book: " <> show book
-    case extension of
-      "epub" -> downloadBinary book >>= convertBinary
-      "mobi" -> (over Book (R.merge { converted: Nothing })) <$> downloadBinary book
-      _ -> throwError $ error "not mobi or epub"
+  handleEpubMobi book = downloadBinary book >>= convertBinary
 
-convertBinary :: Book ( downloaded :: B.Buffer ) -> Aff (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
-convertBinary (Book book@{ downloaded, extension, title }) = do
-  FS.writeFile fileName downloaded
-  _ <- catchKindlegen $ C.execSync ("./bin/kindlegen \"" <> fileName <> "\"") C.defaultExecSyncOptions
-  converted <- FS.readFile mobiFileName
-  FS.unlink fileName
-  FS.unlink mobiFileName
-  pure $ Book $ R.merge book { converted: Just converted }
-  where
-  sanitizedTitle = trim title
+convertBinary :: Book ( downloaded :: B.Buffer ) -> Aff (Book ( downloaded :: B.Buffer ))
+convertBinary book'@(Book book@{ downloaded, extension, title }) = case extension of
+  "mobi" -> pure book'
+  "epub" -> do
+    FS.writeFile fileName downloaded
+    _ <- catchKindlegen $ C.execSync ("./bin/kindlegen \"" <> fileName <> "\"") C.defaultExecSyncOptions
+    converted <- FS.readFile mobiFileName
+    FS.unlink fileName
+    FS.unlink mobiFileName
+    pure $ Book $ book { downloaded = converted }
+    where
+    sanitizedTitle = trim title
 
-  fileName = sanitizedTitle <> "." <> extension
+    fileName = sanitizedTitle <> "." <> extension
 
-  mobiFileName = sanitizedTitle <> ".mobi"
+    mobiFileName = sanitizedTitle <> ".mobi"
 
-  catchKindlegen = liftEffect <<< catchException (\_ -> B.fromString "kindlegen may have failed" UTF8)
+    catchKindlegen = liftEffect <<< catchException (\_ -> B.fromString "kindlegen may have failed" UTF8)
+  _ -> throwError $ error "not mobi or epub"
 
 downloadBinary :: Book () -> Aff (Book ( downloaded :: B.Buffer ))
 downloadBinary book@(Book b) = do
