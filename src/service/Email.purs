@@ -2,9 +2,11 @@ module Service.Email
   ( Email(..)
   , toEmailInterpreter
   , loggingInterpreter
+  , testEmailInterpreter
   ) where
 
 import Control.Apply ((*>))
+import Control.Monad (void)
 import Control.Monad.Error.Class (class MonadError, catchError, throwError)
 import Data.Book (Book(..))
 import Data.Maybe (Maybe, fromMaybe)
@@ -31,21 +33,28 @@ toEmailInterpreter mailjetUser =
     , sendError: sendErrorEmail mailjetUser
     }
 
+testEmailInterpreter :: forall f. MonadEffect f => Email f
+testEmailInterpreter =
+  Email
+    { send: \(Book { title }) from to -> log $ buildSendBookEmail "attachment" title from to
+    , sendError: \title to -> log $ buildSendErrorEmail title "test@email.com" to
+    }
+
 loggingInterpreter :: forall f. MonadError Error f => MonadEffect f => Email f -> Email f
 loggingInterpreter (Email underlying) =
   Email
     underlying
       { send =
         \book from to -> do
-          log "Sending email"
-          result <- underlying.send book from to `logError` "Failed to send email"
-          log "Sent email"
+          log "Sending book email"
+          result <- underlying.send book from to `logError` "Failed to send book email"
+          log "Successfully sent book email"
           pure result
       , sendError =
         \query to -> do
           log "Sending error email"
           result <- underlying.sendError query to `logError` "Failed to send error email"
-          log "Sent error email"
+          log "Succssfully sent error email"
           pure result
       }
   where
@@ -53,25 +62,23 @@ loggingInterpreter (Email underlying) =
 
 sendErrorEmail :: String -> String -> String -> Aff Unit
 sendErrorEmail mailjetUser query to = do
-  responseCode <- sendEmail' mailjetUser body
-  log $ "sent error email (" <> show responseCode <> ") from: " <> from <> ", to: " <> to
-  where
-  from = "test@email.com"
+  void $ sendEmail' mailjetUser $ buildSendErrorEmail query "test@test.com" to
 
-  body =
-    """
+buildSendErrorEmail :: String -> String -> String -> String
+buildSendErrorEmail title from to =
+  """
     {
       "Messages": [
         {
           "From": { "Email": """
-      <> quote from
-      <> """ },
+    <> quote from
+    <> """ },
           "To": [{ "Email": """
-      <> quote to
-      <> """ }],
+    <> quote to
+    <> """ }],
           "TextPart": """
-      <> quote ("Unable to send '" <> query <> "' to your kindle")
-      <> """,
+    <> quote ("Unable to send '" <> title <> "' to your kindle")
+    <> """,
           "Attachments": []
         }
       ]
@@ -81,32 +88,33 @@ sendErrorEmail mailjetUser query to = do
 sendBookEmail :: String -> Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ) -> String -> String -> Aff Unit
 sendBookEmail mailjetUser (Book { downloaded, converted, title }) from to = do
   attachment <- liftEffect $ B.toString E.Base64 $ fromMaybe downloaded converted
-  responseCode <- sendEmail' mailjetUser $ body attachment
+  responseCode <- sendEmail' mailjetUser $ buildSendBookEmail attachment title from to
   log $ "sent book email (" <> show responseCode <> ") from: " <> from <> ", to: " <> to
   where
   fileName' = title <> ".mobi"
 
-  body attachment =
-    """
+buildSendBookEmail :: String -> String -> String -> String -> String
+buildSendBookEmail attachment filename from to =
+  """
     {
       "Messages": [
         {
           "From": { "Email": """
-      <> quote from
-      <> """ },
+    <> quote from
+    <> """ },
           "To": [{ "Email": """
-      <> quote to
-      <> """ }],
+    <> quote to
+    <> """ }],
           "TextPart": "Goodreads-bookmarklet error.",
           "Attachments": [
             {
               "Filename": """
-      <> quote fileName'
-      <> """,
+    <> quote filename
+    <> """,
               "ContentType": "text/plain",
               "Base64Content": """
-      <> quote attachment
-      <> """
+    <> quote attachment
+    <> """
             }
           ]
         }

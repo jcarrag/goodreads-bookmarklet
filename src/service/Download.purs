@@ -1,11 +1,12 @@
 module Service.Download
   ( Download(..)
   , downloadInterpreter
+  , loggingInterpreter
+  , testDownloadInterpreter
   ) where
 
-import Prelude (bind, discard, negate, pure, show, ($), (<$>), (<>), (>>=), (<<<))
 import Control.Alternative ((<|>))
-import Control.Monad.Error.Class (throwError)
+import Control.Monad.Error.Class (class MonadError, catchError, throwError)
 import Data.Array as A
 import Data.Array.Partial (head, tail)
 import Data.Book (Book(..))
@@ -19,9 +20,9 @@ import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff, error)
-import Effect.Class (liftEffect)
+import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
-import Effect.Exception (catchException)
+import Effect.Exception (Error, catchException)
 import Libgen as L
 import Milkis as M
 import Milkis.Impl.Node (nodeFetch)
@@ -30,6 +31,7 @@ import Node.ChildProcess as C
 import Node.Encoding (Encoding(UTF8))
 import Node.FS.Aff as FS
 import Partial.Unsafe (unsafePartial)
+import Prelude (bind, discard, negate, pure, show, ($), (<$>), (<>), (>>=), (<<<), (*>))
 import Record as R
 import Web.DOM.DOMParser (parseHTMLFromString)
 import Web.DOM.DOMParser.Node (makeDOMParser)
@@ -47,6 +49,40 @@ downloadInterpreter =
   Download
     { download: downloadBook
     }
+
+testDownloadInterpreter :: Download Aff
+testDownloadInterpreter =
+  Download
+    { download: readBookFromFile
+    }
+  where
+  readBookFromFile :: String -> Aff (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
+  readBookFromFile filename = do
+    epubFile <- FS.readFile $ "bin/" <> filename <> ".epub"
+    mobiFile <- FS.readFile $ "bin/" <> filename <> ".mobi"
+    pure $ Book
+      $ { author: "author"
+        , extension: "epub"
+        , md5: "md5"
+        , filesize: 0.0
+        , title: filename
+        , downloaded: epubFile
+        , converted: Just mobiFile
+        }
+
+loggingInterpreter :: forall f. MonadError Error f => MonadEffect f => Download f -> Download f
+loggingInterpreter (Download underlying) =
+  Download
+    underlying
+      { download =
+        \query -> do
+          log $ "Downloading book (query: '" <> query <> "')"
+          result <- underlying.download query `logError` "Failed to download book"
+          log "Successfully downloaded book"
+          pure result
+      }
+  where
+  logError fa msg = fa `catchError` (\e -> (log $ msg <> ": " <> show e) *> throwError e)
 
 downloadBook :: String -> Aff (Book ( downloaded :: B.Buffer, converted :: Maybe B.Buffer ))
 downloadBook query = do

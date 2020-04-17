@@ -14,9 +14,9 @@ main =
   launchAff_ do
     config@(Config { mailjetUser }) <- configInterpreter
     let
-      download = D.downloadInterpreter
+      download = D.testDownloadInterpreter
 
-      email = E.toEmailInterpreter mailjetUser
+      email = E.testEmailInterpreter
     A.toHandleEvent download email (awsEvent config)
 
 awsEvent :: Config -> AwsEvent
