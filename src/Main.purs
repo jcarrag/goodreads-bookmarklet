@@ -6,6 +6,7 @@ import Data.AwsEvent (AwsEvent(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Service.Config (Config(..), configInterpreter)
+import Service.Convert as C
 import Service.Download as D
 import Service.Email as E
 
@@ -14,10 +15,12 @@ main =
   launchAff_ do
     config@(Config { mailjetUser }) <- configInterpreter
     let
+      convert = C.testConvertInterpreter
+
       download = D.testDownloadInterpreter
 
       email = E.testEmailInterpreter
-    A.toHandleEvent download email (awsEvent config)
+    A.toHandleEvent convert download email (awsEvent config)
 
 awsEvent :: Config -> AwsEvent
 awsEvent (Config c) =

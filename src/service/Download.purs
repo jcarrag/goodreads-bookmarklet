@@ -12,7 +12,6 @@ import Data.Array.Partial (head, tail)
 import Data.Book (Book(..))
 import Data.Either (fromRight)
 import Data.Maybe (fromJust)
-import Data.Newtype (over)
 import Data.String (trim)
 import Data.String.Regex (replace)
 import Data.String.Regex.Flags (global)
@@ -31,7 +30,7 @@ import Node.ChildProcess as C
 import Node.Encoding (Encoding(UTF8))
 import Node.FS.Aff as FS
 import Partial.Unsafe (unsafePartial)
-import Prelude (bind, discard, negate, pure, show, ($), (<$>), (<>), (>>=), (<<<), (*>))
+import Prelude (bind, discard, negate, pure, show, ($), (<$>), (<>), (<<<), (*>))
 import Record as R
 import Web.DOM.DOMParser (parseHTMLFromString)
 import Web.DOM.DOMParser.Node (makeDOMParser)
@@ -91,11 +90,9 @@ downloadBook query = do
   let
     downloadableBooks = A.sortWith (\(Book b) -> Tuple b.extension $ negate b.filesize) $ A.filter (\(Book b) -> A.elem b.extension [ "mobi", "epub" ]) books
 
-    downloadableBooksE = handleEpubMobi <$> downloadableBooks
+    downloadableBooksE = downloadBinary <$> downloadableBooks
   log $ "sorted books: " <> show downloadableBooks
   A.foldr (<|>) (unsafePartial $ head downloadableBooksE) (unsafePartial $ tail downloadableBooksE)
-  where
-  handleEpubMobi book = downloadBinary book >>= convertBinary
 
 convertBinary :: Book ( downloaded :: B.Buffer ) -> Aff (Book ( downloaded :: B.Buffer ))
 convertBinary book'@(Book book@{ downloaded, extension, title }) = case extension of

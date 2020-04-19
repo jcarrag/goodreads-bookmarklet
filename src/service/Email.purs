@@ -104,7 +104,7 @@ buildSendBookEmail attachment filename from to =
           "To": [{ "Email": """
     <> quote to
     <> """ }],
-          "TextPart": "Goodreads-bookmarklet error.",
+          "TextPart": "Goodreads-bookmarklet",
           "Attachments": [
             {
               "Filename": """
