@@ -6,6 +6,7 @@ output
 .env
 .psc-ide-port
 .psci_modules/
+dist/
 
 # Serverless directories
 .serverless
