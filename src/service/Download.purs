@@ -12,25 +12,22 @@ import Data.Array.Partial (head, tail)
 import Data.Book (Book(..))
 import Data.Either (fromRight)
 import Data.Maybe (fromJust)
-import Data.String (trim)
 import Data.String.Regex (replace)
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Aff (Aff, error)
+import Effect.Aff (Aff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
-import Effect.Exception (Error, catchException)
+import Effect.Exception (Error)
 import Libgen as L
 import Milkis as M
 import Milkis.Impl.Node (nodeFetch)
 import Node.Buffer as B
-import Node.ChildProcess as C
-import Node.Encoding (Encoding(UTF8))
 import Node.FS.Aff as FS
 import Partial.Unsafe (unsafePartial)
-import Prelude (bind, discard, negate, pure, show, ($), (<$>), (<>), (<<<), (*>))
+import Prelude (bind, discard, negate, pure, show, ($), (<$>), (<>), (*>))
 import Record as R
 import Web.DOM.DOMParser (parseHTMLFromString)
 import Web.DOM.DOMParser.Node (makeDOMParser)
@@ -93,26 +90,6 @@ downloadBook query = do
     downloadableBooksE = downloadBinary <$> downloadableBooks
   log $ "sorted books: " <> show downloadableBooks
   A.foldr (<|>) (unsafePartial $ head downloadableBooksE) (unsafePartial $ tail downloadableBooksE)
-
-convertBinary :: Book ( downloaded :: B.Buffer ) -> Aff (Book ( downloaded :: B.Buffer ))
-convertBinary book'@(Book book@{ downloaded, extension, title }) = case extension of
-  "mobi" -> pure book'
-  "epub" -> do
-    FS.writeFile fileName downloaded
-    _ <- catchKindlegen $ C.execSync ("./bin/kindlegen \"" <> fileName <> "\"") C.defaultExecSyncOptions
-    converted <- FS.readFile mobiFileName
-    FS.unlink fileName
-    FS.unlink mobiFileName
-    pure $ Book $ book { downloaded = converted }
-    where
-    sanitizedTitle = trim title
-
-    fileName = sanitizedTitle <> "." <> extension
-
-    mobiFileName = sanitizedTitle <> ".mobi"
-
-    catchKindlegen = liftEffect <<< catchException (\_ -> B.fromString "kindlegen may have failed" UTF8)
-  _ -> throwError $ error "not mobi or epub"
 
 downloadBinary :: Book () -> Aff (Book ( downloaded :: B.Buffer ))
 downloadBinary book@(Book b) = do
