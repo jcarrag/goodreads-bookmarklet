@@ -8,7 +8,7 @@ module Service.Email
 import Control.Apply ((*>))
 import Control.Monad (void)
 import Control.Monad.Error.Class (class MonadError, catchError, throwError)
-import Data.Book (Book(..))
+import Data.Book (Book(..), showFilename)
 import Effect.Aff (Aff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
@@ -35,7 +35,7 @@ toEmailInterpreter mailjetUser =
 testEmailInterpreter :: forall f. MonadEffect f => Email f
 testEmailInterpreter =
   Email
-    { send: \(Book { extension, title }) from to -> log $ buildSendBookEmail "attachment" (title <> "." <> extension) from to
+    { send: \book from to -> log $ buildSendBookEmail "attachment" (showFilename book) from to
     , sendError: \title to -> log $ buildSendErrorEmail title "test@email.com" to
     }
 
@@ -85,12 +85,10 @@ buildSendErrorEmail title from to =
     """
 
 sendBookEmail :: String -> Book ( downloaded :: B.Buffer ) -> String -> String -> Aff Unit
-sendBookEmail mailjetUser (Book { downloaded, title }) from to = do
+sendBookEmail mailjetUser book@(Book { downloaded }) from to = do
   attachment <- liftEffect $ B.toString E.Base64 downloaded
-  responseCode <- sendEmail' mailjetUser $ buildSendBookEmail attachment title from to
+  responseCode <- sendEmail' mailjetUser $ buildSendBookEmail attachment (showFilename book) from to
   log $ "sent book email (" <> show responseCode <> ") from: " <> from <> ", to: " <> to
-  where
-  fileName' = title <> ".mobi"
 
 buildSendBookEmail :: String -> String -> String -> String -> String
 buildSendBookEmail attachment filename from to =
