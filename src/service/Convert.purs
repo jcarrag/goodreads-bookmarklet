@@ -6,8 +6,7 @@ module Service.Convert
   ) where
 
 import Control.Monad.Error.Class (class MonadError, catchError, throwError)
-import Data.Book (Book(..))
-import Data.String (trim)
+import Data.Book (Book(..), showFilename)
 import Effect.Aff (Aff, error)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
@@ -41,9 +40,9 @@ loggingInterpreter (Convert underlying) =
     underlying
       { convert =
         \book -> do
-          _ <- log "Converting book"
+          log $ "Converting book (input:'" <> showFilename book <> "')"
           result <- underlying.convert book `logError` "Failed to convert book"
-          log "Successfully converted book"
+          log $ "Successfully converted book (output:'" <> showFilename result <> "')"
           pure result
       }
   where
@@ -53,18 +52,21 @@ convertBook :: Book ( downloaded :: B.Buffer ) -> Aff (Book ( downloaded :: B.Bu
 convertBook book'@(Book book@{ downloaded, extension, title }) = case extension of
   "mobi" -> pure book'
   "epub" -> do
-    FS.writeFile fileName downloaded
-    _ <- catchKindlegen $ C.execSync ("./bin/kindlegen \"" <> fileName <> "\"") C.defaultExecSyncOptions
-    converted <- FS.readFile mobiFileName
-    FS.unlink fileName
-    FS.unlink mobiFileName
-    pure $ Book $ book { downloaded = converted }
+    FS.writeFile epubFilename downloaded
+    _ <- catchKindlegen $ C.execSync ("./bin/kindlegen \"" <> epubFilename <> "\"") C.defaultExecSyncOptions
+    converted <- FS.readFile mobiFilename
+    FS.unlink epubFilename
+    FS.unlink mobiFilename
+    pure $ Book
+      $ mobiBook
+          { downloaded = converted
+          }
     where
-    sanitizedTitle = trim title
+    epubFilename = showFilename book'
 
-    fileName = sanitizedTitle <> "." <> extension
+    mobiBook = book { extension = "mobi" }
 
-    mobiFileName = sanitizedTitle <> ".mobi"
+    mobiFilename = showFilename $ Book mobiBook
 
     catchKindlegen = liftEffect <<< catchException (\_ -> B.fromString "kindlegen may have failed" UTF8)
   _ -> throwError $ error "not mobi or epub"

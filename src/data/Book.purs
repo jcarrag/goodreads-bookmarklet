@@ -4,6 +4,7 @@ import Prelude
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Newtype (class Newtype)
+import Data.String (trim)
 
 newtype Book r
   = Book
@@ -29,5 +30,8 @@ toBookShow (Book book) =
     , filesize: book.filesize
     , title: book.title
     }
+
+showFilename :: forall r. Book r -> String
+showFilename (Book { title, extension }) = trim title <> "." <> extension
 
 derive instance newtypeBook :: Newtype (Book r) _
