@@ -53,7 +53,11 @@ convertBook book'@(Book book@{ downloaded, extension, title }) = case extension 
   Mobi -> pure book'
   Epub -> do
     FS.writeFile epubFilename downloaded
-    _ <- catchKindlegen $ C.execSync ("./bin/kindlegen \"" <> epubFilename <> "\"") C.defaultExecSyncOptions
+    kindlegenBuffer <- catchKindlegen $ C.execFileSync "./bin/kindlegen" [ epubFilename ] C.defaultExecSyncOptions
+    kindlegenOutput <- liftEffect $ B.toString UTF8 kindlegenBuffer
+    log $ "kindlegen output: " <> show kindlegenOutput
+    ls <- FS.readdir tempDir
+    log $ "ls: " <> show ls
     converted <- FS.readFile mobiFilename
     FS.unlink epubFilename
     FS.unlink mobiFilename
@@ -70,5 +74,5 @@ convertBook book'@(Book book@{ downloaded, extension, title }) = case extension 
 
     mobiFilename = tempDir <> (showFilename $ Book mobiBook)
 
-    catchKindlegen = liftEffect <<< catchException (\_ -> B.fromString "kindlegen may have failed" UTF8)
+    catchKindlegen = liftEffect <<< catchException (\e -> B.fromString ("kindlegen may have failed: " <> show e) UTF8)
   _ -> throwError $ error "not mobi or epub"

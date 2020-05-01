@@ -15,19 +15,19 @@ main =
   launchAff_ do
     config@(Config { mailjetUser }) <- configInterpreter
     let
-      convert = C.testConvertInterpreter
+      convert = C.convertInterpreter
 
       download = D.testDownloadInterpreter
 
-      email = E.testEmailInterpreter
+      email = E.testEmailInterpreter --toEmailInterpreter mailjetUser
     A.toHandleEvent convert download email (awsEvent config)
 
 awsEvent :: Config -> AwsEvent
 awsEvent (Config c) =
   AwsEvent
     { queryStringParameters:
-      { query: c.query
-      , from: c.fromEmail
-      , to: c.toEmail
+      { query: "epub"
+      , from: "james@carragher.org"
+      , to: "james@carragher.org"
       }
     }
