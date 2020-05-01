@@ -6,7 +6,7 @@ module Service.Convert
   ) where
 
 import Control.Monad.Error.Class (class MonadError, catchError, throwError)
-import Data.Book (Book(..), showFilename)
+import Data.Book (Book(..), Extension(..), showFilename)
 import Effect.Aff (Aff, error)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
@@ -50,8 +50,8 @@ loggingInterpreter (Convert underlying) =
 
 convertBook :: Book ( downloaded :: B.Buffer ) -> Aff (Book ( downloaded :: B.Buffer ))
 convertBook book'@(Book book@{ downloaded, extension, title }) = case extension of
-  "mobi" -> pure book'
-  "epub" -> do
+  Mobi -> pure book'
+  Epub -> do
     FS.writeFile epubFilename downloaded
     _ <- catchKindlegen $ C.execSync ("./bin/kindlegen \"" <> epubFilename <> "\"") C.defaultExecSyncOptions
     converted <- FS.readFile mobiFilename
@@ -62,11 +62,13 @@ convertBook book'@(Book book@{ downloaded, extension, title }) = case extension 
           { downloaded = converted
           }
     where
-    epubFilename = showFilename book'
+    tempDir = "/tmp/"
 
-    mobiBook = book { extension = "mobi" }
+    epubFilename = tempDir <> showFilename book'
 
-    mobiFilename = showFilename $ Book mobiBook
+    mobiBook = book { extension = Mobi }
+
+    mobiFilename = tempDir <> (showFilename $ Book mobiBook)
 
     catchKindlegen = liftEffect <<< catchException (\_ -> B.fromString "kindlegen may have failed" UTF8)
   _ -> throwError $ error "not mobi or epub"
