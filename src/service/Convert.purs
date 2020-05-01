@@ -9,7 +9,7 @@ import Control.Monad.Error.Class (class MonadError, catchError, throwError)
 import Data.Book (Book(..), Extension(..), showFilename)
 import Effect.Aff (Aff, error)
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Class.Console (log)
+import Effect.Class.Console (log, logShow)
 import Effect.Exception (Error, catchException)
 import Node.Buffer as B
 import Node.ChildProcess as C
@@ -53,9 +53,13 @@ convertBook book'@(Book book@{ downloaded, extension, title }) = case extension 
   Mobi -> pure book'
   Epub -> do
     FS.writeFile epubFilename downloaded
-    kindlegenBuffer <- catchKindlegen $ C.execFileSync "./bin/kindlegen" [ epubFilename ] C.defaultExecSyncOptions
-    kindlegenOutput <- liftEffect $ B.toString UTF8 kindlegenBuffer
-    log $ "kindlegen output: " <> show kindlegenOutput
+    --kindlegenBuffer <- catchKindlegen $ C.execFileSync "./bin/kindlegen" [ epubFilename ] C.defaultExecSyncOptions
+    let
+      cb result = pure unit
+    childProcess <- C.execFile "./bin/kindlegen" [ epubFilename ] C.defaultExecSyncOptions
+    C.onError childProcess logShow
+    --kindlegenOutput <- liftEffect $ B.toString UTF8 kindlegenBuffer
+    --log $ "kindlegen output: " <> show kindlegenOutput
     ls <- FS.readdir tempDir
     log $ "ls: " <> show ls
     converted <- FS.readFile mobiFilename
