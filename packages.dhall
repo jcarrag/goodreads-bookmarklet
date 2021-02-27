@@ -119,23 +119,17 @@ let additions =
 
 
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.13.5-20200103/packages.dhall sha256:0a6051982fb4eedb72fbe5ca4282259719b7b9b525a4dda60367f98079132f30
+      https://github.com/purescript/package-sets/releases/download/psc-0.13.8-20210226/packages.dhall sha256:7e973070e323137f27e12af93bc2c2f600d53ce4ae73bb51f34eb7d7ce0a43ea
 
 let overrides = {=}
 
 let additions =
-  { web-dom-parser =
-      { dependencies =
-          [ "effect"
-          , "prelude"
-          , "web-dom"
-          , "partial"
-          ]
-      , repo =
-          "https://github.com/purescript-web/purescript-web-dom-parser.git"
-      , version =
-          "v6.1.0"
+      { web-dom-parser =
+        { dependencies = [ "effect", "prelude", "web-dom", "partial" ]
+        , repo =
+            "https://github.com/purescript-web/purescript-web-dom-parser.git"
+        , version = "v6.1.0"
+        }
       }
-  }
 
 in  upstream // overrides // additions
