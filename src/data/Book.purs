@@ -18,6 +18,7 @@ import Simple.JSON as JSON
 data Extension
   = Epub
   | Mobi
+  | Png -- to convert an epub to mobi
   | Other
 
 instance decodeExtensionIns :: Decode Extension where

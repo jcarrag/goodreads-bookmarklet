@@ -8,14 +8,11 @@ module Service.Convert
 import Control.Monad.Error.Class (class MonadError, catchError, throwError)
 import Data.Book (Book(..), Extension(..), showFilename)
 import Effect.Aff (Aff, error)
-import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Class.Console (log, logShow)
-import Effect.Exception (Error, catchException)
+import Effect.Class (class MonadEffect)
+import Effect.Class.Console (log)
+import Effect.Exception (Error)
 import Node.Buffer as B
-import Node.ChildProcess as C
-import Node.Encoding (Encoding(UTF8))
-import Node.FS.Aff as FS
-import Prelude (bind, discard, pure, show, ($), (*>), (<<<), (<>))
+import Prelude (bind, discard, pure, show, ($), (*>), (<>))
 
 newtype Convert f
   = Convert
@@ -51,32 +48,9 @@ loggingInterpreter (Convert underlying) =
 convertBook :: Book ( downloaded :: B.Buffer ) -> Aff (Book ( downloaded :: B.Buffer ))
 convertBook book'@(Book book@{ downloaded, extension, title }) = case extension of
   Mobi -> pure book'
-  Epub -> do
-    FS.writeFile epubFilename downloaded
-    --kindlegenBuffer <- catchKindlegen $ C.execFileSync "./bin/kindlegen" [ epubFilename ] C.defaultExecSyncOptions
-    let
-      cb result = pure unit
-    childProcess <- C.execFile "./bin/kindlegen" [ epubFilename ] C.defaultExecSyncOptions
-    C.onError childProcess logShow
-    --kindlegenOutput <- liftEffect $ B.toString UTF8 kindlegenBuffer
-    --log $ "kindlegen output: " <> show kindlegenOutput
-    ls <- FS.readdir tempDir
-    log $ "ls: " <> show ls
-    converted <- FS.readFile mobiFilename
-    FS.unlink epubFilename
-    FS.unlink mobiFilename
+  Epub ->
     pure $ Book
-      $ mobiBook
-          { downloaded = converted
+      $ book
+          { extension = Png
           }
-    where
-    tempDir = "/tmp/"
-
-    epubFilename = tempDir <> showFilename book'
-
-    mobiBook = book { extension = Mobi }
-
-    mobiFilename = tempDir <> (showFilename $ Book mobiBook)
-
-    catchKindlegen = liftEffect <<< catchException (\e -> B.fromString ("kindlegen may have failed: " <> show e) UTF8)
   _ -> throwError $ error "not mobi or epub"
