@@ -8,7 +8,7 @@ export default [
     output: {
       file: "dist/download.js",
       format: "es",
-      sourceMap: false
+      sourcemap: true
     },
     plugins: [resolve(), commonjs(), serve("dist")]
   }

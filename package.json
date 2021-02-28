@@ -12,7 +12,7 @@
     "postinstall": "patch-package",
     "pursBuild": "spago bundle-module --main Export --to dist/server.js",
     "pursDeploy": "npm run pursBuild && npx serverless deploy function --function server",
-    "jsBuild": "rollup -c -m -w",
+    "jsBuild": "rollup -c",
     "start": "npm run pursBuild && npm run jsBuild"
   },
   "devDependencies": {
