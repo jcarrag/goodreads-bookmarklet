@@ -1,6 +1,7 @@
 module Libgen where
 
-import Prelude
+import Prelude (bind, pure, show, ($), (<<<))
+import Control.Monad.Error.Class (throwError)
 import Control.Monad.Except (runExcept)
 import Control.Promise (Promise, toAffE)
 import Data.Book (Book, decodeBook)
@@ -8,9 +9,7 @@ import Data.Either (either)
 import Data.Newtype (unwrap)
 import Data.Traversable (traverse)
 import Effect (Effect)
-import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Exception (throw)
+import Effect.Aff (Aff, error)
 import Foreign (Foreign)
 
 foreign import _getMirror :: Effect (Promise String)
@@ -25,11 +24,10 @@ getMirror = toAffE _getMirror
 search :: String -> String -> Aff (Array (Book ()))
 search mirror query = do
   results <- toAffE $ _search mirror query
-  books <- traverse decode' results
-  pure books
+  traverse decode' results
   where
   decode' :: Foreign -> Aff (Book ())
-  decode' res = liftEffect $ either (throw <<< show) pure $ runExcept $ decodeBook res
+  decode' resa = either (throwError <<< error <<< show) pure $ runExcept $ decodeBook resa
 
 getPreDownloadUrl :: Book () -> Aff String
 getPreDownloadUrl book = toAffE $ _getPreDownloadUrl $ _.md5 <<< unwrap $ book

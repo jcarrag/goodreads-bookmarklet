@@ -20,3 +20,16 @@ index dadfa77..47a90f7 100644
        return err
      }
    }
+diff --git a/node_modules/libgen/lib/search.js b/node_modules/libgen/lib/search.js
+index a4cdb03..5aa786a 100644
+--- a/node_modules/libgen/lib/search.js
++++ b/node_modules/libgen/lib/search.js
+@@ -144,6 +144,8 @@ module.exports = async function (options) {
+ 
+     let ids = await idFetch(options)
+ 
++    if (ids instanceof Error)
++      throw ids;
+ 
+     // slice options to trim data.
+     // Initial check ensures that the slicing is required

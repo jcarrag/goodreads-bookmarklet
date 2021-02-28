@@ -61,7 +61,7 @@ loggingInterpreter (Email underlying) =
 
 sendErrorEmail :: String -> String -> String -> Aff Unit
 sendErrorEmail mailjetUser query to = do
-  void $ sendEmail' mailjetUser $ buildSendErrorEmail query "test@test.com" to
+  void $ sendEmail' mailjetUser $ buildSendErrorEmail query "james@carragher.org" to
 
 buildSendErrorEmail :: String -> String -> String -> String
 buildSendErrorEmail title from to =
