@@ -22,7 +22,7 @@ handleEvent event _ cbF = (launchAff_ $ A.awsHandleEvent event) >>= \_ -> runEff
   response =
     { statusCode: 200
     , headers:
-      { "Access-Control-Allow-Origin": "*"
-      , "Access-Control-Allow-Credentials": true
-      }
+        { "Access-Control-Allow-Origin": "*"
+        , "Access-Control-Allow-Credentials": true
+        }
     }

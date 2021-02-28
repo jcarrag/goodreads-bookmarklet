@@ -8,10 +8,10 @@ import Data.Newtype (class Newtype)
 newtype AwsEvent
   = AwsEvent
   { queryStringParameters ::
-    { query :: String
-    , from :: String
-    , to :: String
-    }
+      { query :: String
+      , from :: String
+      , to :: String
+      }
   }
 
 derive instance genericEvent :: Generic AwsEvent _

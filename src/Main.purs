@@ -26,8 +26,8 @@ awsEvent :: Config -> AwsEvent
 awsEvent (Config c) =
   AwsEvent
     { queryStringParameters:
-      { query: "epub"
-      , from: "james@carragher.org"
-      , to: "james@carragher.org"
-      }
+        { query: "epub"
+        , from: "james@carragher.org"
+        , to: "james@carragher.org"
+        }
     }
