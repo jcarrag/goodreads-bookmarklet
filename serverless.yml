@@ -53,29 +53,15 @@ provider:
 
 # you can add packaging information here
 package:
-  include:
-    - dist/server.js
   exclude:
-    - bookmarklet/**
-    - default.nix
-    - dist/**
-    - .env
-    - lib/**
-    - output/**
-    - package.json
-    - package-lock.json
-    - packages.dhall
-    - patches/**
-    - README.md
-    - rollup.config.js
-    - serverless.yml
-    - .spago/**
-    - spago.dhall
-    - src/**
+    - ./**
+  include:
+    - dist/server-rolled.js
+    - dist/server-rolled.js.map
 
 functions:
   server:
-    handler: dist/server.handler
+    handler: dist/server-rolled.handler
     #    The following are a few example events you can configure
     #    NOTE: Please make sure to change your handler code to work with those events
     #    Check the event documentation for details
