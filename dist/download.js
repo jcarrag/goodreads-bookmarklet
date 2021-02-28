@@ -98,7 +98,7 @@ var sendBook = async function(fromEmail, toEmail) {
   console.log("sending request");
 
   const response = await fetch(
-    "https://6wm2fn9871.execute-api.ap-northeast-1.amazonaws.com/production?query=" +
+    "https://82aoiobtl0.execute-api.eu-west-2.amazonaws.com/production?query=" +
       encodeURIComponent(query) +
       "&from=" +
       fromEmail +
@@ -110,7 +110,6 @@ var sendBook = async function(fromEmail, toEmail) {
   if (!response.ok) {
     throw new Error("Fetch error:", response.statusText);
   }
-  const result = await response;
 
   console.log("request sent");
 };
