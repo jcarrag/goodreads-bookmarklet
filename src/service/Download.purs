@@ -9,7 +9,6 @@ import Control.Alternative ((<|>))
 import Control.Monad.Error.Class (class MonadError, catchError, throwError)
 import Control.Monad.Except (runExcept)
 import Data.Array as A
-import Data.Array.Partial (head, tail)
 import Data.Book (Book(..), Extension(..))
 import Data.Either (either, fromRight)
 import Data.Maybe (fromJust)
@@ -21,7 +20,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
-import Effect.Exception (Error)
+import Effect.Exception (Error, error)
 import Foreign.Generic (encode, decode)
 import Libgen as L
 import Milkis as M
@@ -35,7 +34,7 @@ import Web.DOM.DOMParser (parseHTMLFromString)
 import Web.DOM.DOMParser.Node (makeDOMParser)
 import Web.DOM.Document (Document, toNode)
 import Web.DOM.Element (fromNode, getAttribute)
-import Web.DOM.Node (firstChild, nextSibling, textContent)
+import Web.DOM.Node (firstChild, nextSibling)
 
 newtype Download f
   = Download
@@ -90,10 +89,9 @@ downloadBook query = do
   log $ "books: " <> show books
   let
     downloadableBooks = A.sortWith (\(Book b) -> Tuple b.extension $ negate b.filesize) $ A.filter (\(Book b) -> A.elem b.extension [ Mobi, Epub ]) books
-
     downloadableBooksE = downloadBinary <$> downloadableBooks
   log $ "sorted books: " <> show downloadableBooks
-  A.foldr (<|>) (unsafePartial $ head downloadableBooksE) (unsafePartial $ tail downloadableBooksE)
+  A.foldr (<|>) (throwError $ error "could not download book") downloadableBooksE
 
 downloadBinary :: Book () -> Aff (Book ( downloaded :: B.Buffer ))
 downloadBinary book@(Book b) = do
@@ -127,23 +125,22 @@ getDownloadUrl preDownloadUrl =
   where
   fetch = M.fetch nodeFetch
 
--- XPATH: "/body/table/tbody/tr[1]/td[2]/a/@href"
+-- XPATH: "/html/body/table/tbody/tr/td[2]/div[1]/h2/a"
 documentToFileDownloadUrl :: Document -> Effect String
 documentToFileDownloadUrl document = do
   let
     node = toNode document
-  body1 <- firstChild' node
-  body <- nextSibling' body1
-  text <- textContent body
-  table1 <- firstChild' body
-  table <- nextSibling' table1
-  tbody2 <- firstChild' table
-  tbody1 <- nextSibling' tbody2
-  tbody <- nextSibling' tbody1
-  tr <- firstChild' tbody
+  hTML <- firstChild' node
+  html <- nextSibling' hTML
+  head <- firstChild' html
+  body <- nextSibling' head
+  table <- firstChild' body
+  tr <- firstChild' table
   td1 <- firstChild' tr
-  td <- nextSibling' td1
-  a <- firstChild' td
+  td2 <- nextSibling' td1
+  div <- firstChild' td2
+  h2 <- firstChild' div
+  a <- firstChild' h2
   let
     aE = unsafePartial $ fromJust $ fromNode a
   unsafePartial $ fromJust <$> getAttribute "href" aE
