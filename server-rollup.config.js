@@ -3,7 +3,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import sourcemaps from "rollup-plugin-sourcemaps";
 
 export default {
-  input: "dist/server.js",
+  input: "output/Export/index.js",
   output: {
     file: "dist/server-rolled.js",
     format: "cjs",

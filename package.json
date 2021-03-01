@@ -1,7 +1,6 @@
 {
   "name": "goodreads-bookmarklet",
   "version": "1.0.0",
-  "main": "dist/bundle.js",
   "license": "MIT",
   "description": "A bookmarklet to push Goodreads to Kindle",
   "repository": {
@@ -10,9 +9,10 @@
   },
   "scripts": {
     "postinstall": "patch-package",
-    "pursBuild": "spago bundle-module --source-maps --main Export --to dist/server.js && rollup -c server-rollup.config.js",
+    "pursStart": "NODE_OPTIONS=\"--enable-source-maps\" spago run --purs-args \"-g sourcemaps\"",
+    "pursBuild": "spago build --purs-args \"-g sourcemaps\" && rollup -c server-rollup.config.js",
     "pursDeploy": "npm run pursBuild && npx serverless deploy",
-    "jsBuild": "rollup -c",
+    "jsBuild": "rollup -c client-rollup.config.js",
     "start": "npm run pursBuild && npm run jsBuild"
   },
   "devDependencies": {

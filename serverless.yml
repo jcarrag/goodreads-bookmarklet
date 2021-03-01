@@ -101,6 +101,7 @@ functions:
 
     #    Define function environment variables here
     environment:
+      NODE_OPTIONS: --enable-source-maps
       MAILJET_USER: ${ssm:/goodreads-bookmarklet/mailjet_user}
 # you can add CloudFormation resource templates here
 #resources:
