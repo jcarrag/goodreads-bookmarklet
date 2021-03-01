@@ -27,7 +27,7 @@ provider:
   region: eu-west-2
   stage: production
   timeout: 600
-  memorySize: 512
+  memorySize: 1024
 
 # you can overwrite defaults here
 
