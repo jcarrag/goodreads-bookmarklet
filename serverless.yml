@@ -53,6 +53,7 @@ provider:
 
 # you can add packaging information here
 package:
+  excludeDevDependencies: false
   exclude:
     - ./**
   include:
