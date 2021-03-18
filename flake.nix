@@ -7,15 +7,13 @@
       pkgs = import nixpkgs { inherit system; };
     in
       {
-        packages.${system} = {
-          devShell.${system} = pkgs.mkShell {
-            buildInputs = with pkgs; [
-              nodePackages.purescript-language-server
-              nodePackages.purty
-              purescript
-              spago
-            ];
-          };
+        devShell.${system} = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            nodePackages.purescript-language-server
+            nodePackages.purty
+            purescript
+            spago
+          ];
         };
       };
 }
